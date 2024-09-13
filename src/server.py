@@ -1,13 +1,18 @@
 import socket
 import polynomial
+import visualize_poly
 
 
 class PolynomialServer(polynomial.Polynomial):
     def __init__(self, port: int, coeffs):
         self.port = port
         self.address = 'localhost'
-    def get_port(self): return self.port
-    def get_address(self): return self.address
+
+    def get_port(self):
+        return self.port
+
+    def get_address(self):
+        return self.address
 
     def create_server(self):
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -24,19 +29,22 @@ class PolynomialServer(polynomial.Polynomial):
             print("Waiting for the connection.\n")
             client_socket, client_address = tcp_socket.accept()
             try:
-                print("Connection from client.")
+                print(f"Connection from client: {client_address}.")
                 while True:
                     data = client_socket.recv(1024)
                     if data:
                         data_str = data.decode().strip()
                         coeffs = [float(c) for c in data_str.split()]
 
-                        print(f"Received coeffs: {coeffs}\n")
+                        print(f"Received coefficients: {coeffs}\n")
 
+                        # Tworzenie obiektu Polynomial
                         poly = polynomial.Polynomial(coeffs)
-
                         print(f"Constructed Polynomial: {poly}\n")
 
+                        # Wizualizacja wielomianu
+                        visualization = visualize_poly.VisualizePoly(coeffs)
+                        visualization.plot(title="Polynomial Visualization")
 
                         response = str(poly).encode()
                         client_socket.sendall(response)
@@ -45,20 +53,3 @@ class PolynomialServer(polynomial.Polynomial):
                         break
             finally:
                 client_socket.close()
-
-    def create_client(self, port: int, address: str = 'localhost'):
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_address = (address, port)
-        print(f"Connecting to {address}:{port}")
-        client_socket.connect(server_address)
-
-        try:
-            coeffs_input = input("Enter polynomial coefficients (space-separated): ")
-            print(f"Sending coefficients: {coeffs_input}")
-            client_socket.sendall(coeffs_input.encode())
-
-            response = client_socket.recv(1024)
-            print(f"Received polynomial from server: {response.decode()}")
-        finally:
-            print("Closing connection.\n")
-            client_socket.close()
